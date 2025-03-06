@@ -9,14 +9,16 @@ const fs = require('fs');
 const path = require('path');
 const levenshtein = require('fast-levenshtein'); 
 
+const cron = require('node-cron');
+
 const app = express()
 
-const SQLiteStore = require('connect-sqlite3')(session); //No need (temporary)
+// const SQLiteStore = require('connect-sqlite3')(session); //No need (temporary)
 
 //middleware
 app.use(express.json());
 app.use(session({
-    store: new SQLiteStore(), //No need (Temporary)
+    // store: new SQLiteStore(), //No need (Temporary)
     secret: 'supersecretkey',
     resave: false,
     saveUninitialized: true,
@@ -52,18 +54,24 @@ app.post('/auth/register', async (req, res) => {
                 return res.status(400).json({ message: "Email or Username already exists!" });
             }
 
-            const hashedPassword = await bcrypt.hash(password, 10);
-            db.run(
-                `INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')`,
-                [username, email, hashedPassword],
-                function (err) {
-                    if (err) {
-                        console.error("Failed to register user:", err);
-                        return res.status(500).json({ message: "Failed to register user..Try again" });
+            try {
+                const hashedPassword = await bcrypt.hash(password, 10);
+                db.run(
+                    `INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')`,
+                    [username, email, hashedPassword],
+                    function (err) {
+                        if (err) {
+                            console.error("Failed to register user:", err);
+                            return res.status(500).json({ message: "Failed to register user..Try again" });
+                        }
+                        res.status(201).json({ message: "User registered successfully!" });
                     }
-                    res.status(201).json({ message: "User registered successfully!" });
-                }
-            );
+                );
+            } 
+            catch (error) {
+                console.error("Hashing Error:", error);
+                return res.status(500).json({ message: "Error hashing password." });
+            }
         });
     } 
     catch (error) {
@@ -176,6 +184,11 @@ app.post('/scan', (req, res) => {
         if(user.credits < 1){
             return res.status(403).json({ message: "Insufficient credits! Please request." });
         }
+
+        if (!user || user.credits === undefined) {
+            return res.status(400).json({ message: "Invalid user or no credits found." });
+        }
+
         //deduct 1 credit
         db.run(`UPDATE users SET credits = credits - 1 WHERE id = ?`, [req.session.user.id], (err) => {
             if(err){
@@ -187,8 +200,14 @@ app.post('/scan', (req, res) => {
             // Save the document locally 
             const docId = Date.now();
             const filePath = path.join(uploadDir, `${docId}.txt`);
-            fs.writeFileSync(filePath, text);
-            console.log(`Document saved at: ${filePath}`);
+            try {
+                fs.writeFileSync(filePath, text);
+                console.log(`Document saved at: ${filePath}`);
+            } 
+            catch (err) {
+                console.error("File Writing Error:", err);
+                return res.status(500).json({ message: "Failed to save document" });
+            }
 
             // Save document metadata in the database
             db.run(
@@ -293,6 +312,91 @@ app.post('/admin/approve-credits', (req, res) => {
 });
 
 // Admin Analytics Dashboard
+app.get('/admin/analytics', (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).json({ message: "Access Denied! Admin only." });
+    }
+
+    try{
+        //Get total number of scans
+        db.get(`SELECT COUNT(*) AS totalScans FROM documents`, (err, totalScans) => {
+            if(err){
+                console.error("Database Error:", err);
+                return res.status(500).json({ message: "Database error" });
+            }
+            //Get most active users
+            db.all(
+                `SELECT users.username, COUNT(documents.id) AS scanCount
+                FROM documents
+                JOIN users ON documents.userId = users.id
+                GROUP BY users.username
+                ORDER BY scanCount DESC`,
+                (err, topUsers) => {
+                    if(err){
+                        console.error("Database Error:", err);
+                        return res.status(500).json({ message: "Database error" });
+                    }
+                    // res.status(200).json({ totalScans, topUsers });
+
+                    // Get most common document topics (basic implementation)
+                    db.all(
+                        `SELECT filePath from documents`,
+                        (err, docs) => {
+                            if (err) {
+                                console.error("Database Error:", err);
+                                return res.status(500).json({ message: "Database error" });
+                            }
+
+                            const wordFrequency = {};
+                            docs.forEach(doc => {
+                                const text = fs.readFileSync(doc.filePath, 'utf8');
+                                const words = text.split(/\s+/);
+                                words.forEach(word => {
+                                    wordFrequency[word] = (wordFrequency[word] || 0) + 1;
+                                });
+                            });
+
+                            const sortedWords = Object.entries(wordFrequency)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 10)
+                                .map(([word, count]) => ({ word, count}));
+
+                            res.status(200).json({
+                                totalScans: totalScans.totalScans,
+                                topUsers,
+                                mostCommonTopics: sortedWords
+                            });
+                        }
+                    );
+                }
+            );
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+// Schedule job to reset credits at midnight
+cron.schedule('0 0 * * *', () => {
+    console.log("Running credit reset cron job...");
+
+    try {
+        db.run(`UPDATE users SET credits = 20 WHERE role = 'user'`, function (err) {
+            if (err) {
+                console.error("Error resetting credits:", err.message);
+            } else {
+                console.log(`Credits reset for all users. Rows affected: ${this.changes}`);
+            }
+        });
+    } catch (error) {
+        console.error("Unexpected error in cron job:", error);
+    }
+}, {
+    timezone: "UTC" // Ensure the job runs at UTC midnight
+});
+console.log("Cron job scheduled to reset credits at midnight.");
+
 
 
 const PORT = process.env.PORT || 3001;
