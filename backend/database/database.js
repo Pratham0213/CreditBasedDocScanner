@@ -43,7 +43,7 @@ const db = new sqlite3.Database("./backend/database/users.db", (err) => {
                             console.log("Credit_requests table is ready.");
                         }
                     }
-                )
+                );
 
                 //Create documents table if it doesn't exist
                 db.run(
@@ -65,33 +65,40 @@ const db = new sqlite3.Database("./backend/database/users.db", (err) => {
 
                 //Check for admin role
                 db.get(`SELECT * FROM users WHERE role = 'admin'`, (err, admin) => {
-                    if(err) {
+                    if (err) {
                         console.error("Admin Error:", err);
-                    }
-                    else if(!admin){
+                    } 
+                    else if (!admin) {
                         const bcrypt = require('bcrypt');
                         const adminPassword = process.env.ADMIN_PASSWORD;
 
+                        if (!adminPassword) {
+                            console.error("ADMIN_PASSWORD is not set in the environment variables.");
+                            return;
+                        }
+                
                         bcrypt.hash(adminPassword, 10, (err, hashedPassword) => {
-                            if(err){
+                            if (err) {
                                 console.error("Error hashing password:", err);
-                            }
-                            else{
+                            } 
+                            else {
                                 db.run(
                                     `INSERT INTO users (username, email, password, role, credits)
-                                    VALUES ('admin', 'adarshshivam@gmail.com', ?, 'admin', 9999)`,
+                                    VALUES ('admin', 'adarshshivam80@gmail.com', ?, 'admin', 9999)`,
                                     [hashedPassword],
                                     err => {
-                                        if(err){
+                                        if (err) {
                                             console.error("Error creating admin:", err);
-                                        }
-                                        else{
+                                        } else {
                                             console.log("Admin created successfully!");
                                         }
                                     }
                                 );
                             }
                         });
+                    }
+                    else {
+                        console.log("Admin user already exists.");
                     }
                 });
             }
