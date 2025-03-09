@@ -16,7 +16,7 @@
             <h1>Credit-Based Document Scanning System</h1>
         </div>
         <nav>
-            <a href="/">Home</a>
+            <a href="/" id="homeLink">Home</a>
             <a href="about.html">About</a>
             <a href="contact.html">Contact</a>
             <a href="loginSignup.html" id="authButton" class="btn">Login/SignUp</a>
@@ -45,7 +45,19 @@
             .then(response => response.json())
             .then(data => {
                 const authButton = document.getElementById('authButton');
+                const homeLink = document.getElementById('homeLink');
+
                 if (data.user) {
+                    // Update the Home link based on the user's role
+                    if (data.user.role === 'admin') {
+                        homeLink.textContent = 'Admin Dashboard';
+                        homeLink.href = 'admin-dashboard.html';
+                    } else {
+                        homeLink.textContent = 'Dashboard';
+                        homeLink.href = 'dashboard.html';
+                    }
+
+                    // Update the auth button to Logout
                     authButton.textContent = 'Logout';
                     authButton.href = '#'; // Prevent default link behavior
                     authButton.addEventListener('click', () => {
@@ -53,12 +65,17 @@
                             .then(() => window.location.href = 'loginSignup.html');
                     });
                 } else {
+                    // Default links for non-logged-in users
+                    homeLink.textContent = 'Home';
+                    homeLink.href = '/';
                     authButton.textContent = 'Login/Signup';
                     authButton.href = 'loginSignup.html';
                 }
+            })
+            .catch(error => {
+                console.error("Error fetching user profile:", error);
             });
     </script>
-
 </body>
 
 </html>

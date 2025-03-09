@@ -161,7 +161,7 @@
                 } else {
                     documentList.innerHTML = documents.map(doc => `
                         <li>
-                            <a href="${doc.filePath}" target="_blank">${doc.fileName}</a>
+                           <a href="/uploads/${doc.filePath}" target="_blank">${doc.fileName}</a>
                         </li>
                     `).join('');
                 }

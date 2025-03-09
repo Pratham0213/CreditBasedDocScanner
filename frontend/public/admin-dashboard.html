@@ -70,6 +70,7 @@
                 ).join(', ')}`;
             } catch (error) {
                 console.error("Error loading analytics:", error);
+                alert('Error loading analytics. Please try again later.');
             }
         }
 
@@ -97,12 +98,18 @@
                 const response = await fetch('/admin/documents');
                 const documents = await response.json();
                 const documentList = document.getElementById('documentList');
-                documentList.innerHTML = documents.map(doc => `
-                    <li>
-                        <a href="${doc.filePath}" target="_blank">${doc.fileName}</a>
-                    </li>
-                `).join('');
-            } catch (error) {
+                if (documents.length === 0) {
+                    documentList.innerHTML = '<li>No documents uploaded yet.</li>';
+                }
+                else{
+                    documentList.innerHTML = documents.map(doc => `
+                        <li>
+                            <a href="/uploads/${doc.filePath}" target="_blank">${doc.fileName}</a>
+                        </li>
+                    `).join('');
+                }
+            } 
+            catch (error) {
                 console.error("Error loading documents:", error);
             }
         }

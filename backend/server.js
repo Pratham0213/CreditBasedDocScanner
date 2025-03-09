@@ -25,6 +25,7 @@ const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
+app.use('/uploads', express.static(uploadDir));
 
 // Utility functions
 function getQuery(sql, params = []) {
@@ -162,31 +163,35 @@ app.post('/scan', async (req, res) => {
 
         // Save the document locally
         const docId = Date.now();
-        const filePath = path.join(uploadDir, `${docId}_${fileName}`);
+        const savedFileName = `${docId}_${fileName}`;
+        const filePath = path.join(uploadDir, savedFileName);
         await fs.promises.writeFile(filePath, text);
 
-        // Save document metadata in the database
         await runQuery(
             `INSERT INTO documents (userId, filePath, fileName) VALUES (?, ?, ?)`,
-            [req.session.user.id, filePath, fileName]
+            [req.session.user.id, savedFileName, fileName]
         );
 
         // Compare the uploaded text with all existing documents
-        const docs = await getAllQuery(`SELECT filePath, fileName FROM documents WHERE filePath != ?`, [filePath]);
+        const docs = await getAllQuery(`SELECT filePath, fileName FROM documents WHERE filePath != ?`, [savedFileName]);
         const matches = [];
 
         for (const doc of docs) {
             try {
-                const existingText = await fs.promises.readFile(doc.filePath, 'utf8');
+                // Construct the full file path
+                const existingFilePath = path.join(uploadDir, doc.filePath);
+                const existingText = await fs.promises.readFile(existingFilePath, 'utf8');
                 const similarity = calculateSimilarity(text, existingText);
                 console.log(`Comparing ${fileName} with ${doc.fileName}: Similarity = ${similarity}`);
-                if (similarity > 0.3) { // Adjust the threshold as needed
+
+                if (similarity > 0.6) { // Adjust the threshold as needed
                     matches.push({
                         fileName: doc.fileName,
                         similarity: (similarity * 100).toFixed(2) + '%'
                     });
                 }
-            } catch (err) {
+            }
+            catch (err) {
                 console.error("Error reading file:", doc.filePath, err);
             }
         }
@@ -199,7 +204,8 @@ app.post('/scan', async (req, res) => {
             fileName,
             matches // Send matches back to the frontend
         });
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
@@ -314,11 +320,17 @@ app.get('/admin/analytics', async (req, res) => {
         const wordFrequency = {};
 
         for (const doc of docs) {
-            const text = await fs.promises.readFile(doc.filePath, 'utf8');
-            const words = text.split(/\s+/);
-            words.forEach(word => {
-                wordFrequency[word] = (wordFrequency[word] || 0) + 1;
-            });
+            try {
+                const text = await fs.promises.readFile(path.join(uploadDir, doc.filePath), 'utf8');
+
+                const words = text.split(/\s+/);
+                words.forEach(word => {
+                    wordFrequency[word] = (wordFrequency[word] || 0) + 1;
+                });
+            }
+            catch (err) {
+                console.error("Error reading file:", doc.filePath, err);
+            }
         }
 
         const mostCommonTopics = Object.entries(wordFrequency)
