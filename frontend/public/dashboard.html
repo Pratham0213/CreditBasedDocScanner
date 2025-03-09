@@ -39,6 +39,11 @@
             <h2>Uploaded Documents</h2>
             <ul id="documentList"></ul>
         </section>
+
+        <section id="matchesSection">
+            <h2>Matching Documents</h2>
+            <ul id="matchesList"></ul>
+        </section>
     </main>
 
     <footer>
@@ -83,7 +88,7 @@
                 const fileName = file.name; // Get the file name
 
                 try {
-                    // Step 1: Upload the document
+                    // Step 1: Upload the document and get matches
                     const uploadResponse = await fetch('/scan', {
                         method: 'POST',
                         headers: {
@@ -99,19 +104,21 @@
                     alert('Document uploaded successfully!');
                     document.getElementById('creditBalance').textContent = uploadResult.creditsLeft;
 
-                    // Step 2: Check for similar documents
-                    const matchesResponse = await fetch(`/matches/${uploadResult.docId}`);
-                    const matchesResult = await matchesResponse.json();
-                    if (matchesResult.matches && matchesResult.matches.length > 0) {
-                        const similarityMessage = matchesResult.matches
-                            .map(match => `Similarity: ${match.similarity} with ${match.fileName}`)
-                            .join('\n');
-                        alert(`Similar documents found:\n${similarityMessage}`);
+                    // Step 2: Display matches
+                    const matchesList = document.getElementById('matchesList');
+                    if (uploadResult.matches && uploadResult.matches.length > 0) {
+                        matchesList.innerHTML = uploadResult.matches
+                            .map(match => `<li>${match.fileName} (${match.similarity})</li>`)
+                            .join('');
+
+                            // Show alert if a match is found
+                        alert(`Matching document found: ${uploadResult.matches[0].fileName} (${uploadResult.matches[0].similarity})`);
                     } else {
-                        alert('No similar documents found.');
+                        matchesList.innerHTML = '<li>No similar documents found.</li>';
                     }
 
-                    loadUploadedDocs(); // Refresh list
+                    // Refresh the document list
+                    loadUploadedDocs();
                 } catch (error) {
                     alert(error.message);
                 }

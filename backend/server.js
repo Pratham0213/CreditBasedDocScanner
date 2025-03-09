@@ -132,72 +132,79 @@ app.get('/user/profile', async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
-// Document Upload
-app.post('/scan', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ message: "Not Authorized! Please Login" });
-    const { text, fileName } = req.body;
-    if (!text || !fileName) return res.status(400).json({ message: "Text content and file name are required!" });
-
-    try {
-        const user = await getQuery(`SELECT credits FROM users WHERE id = ?`, [req.session.user.id]);
-        if (!user || user.credits < 1) return res.status(403).json({ message: "Insufficient credits! Please request." });
-
-        await runQuery(`UPDATE users SET credits = credits - 1 WHERE id = ?`, [req.session.user.id]);
-
-        const docId = Date.now();
-        const filePath = path.join(uploadDir, `${docId}_${fileName}`);
-        await saveDocument(filePath, text);
-
-        await runQuery(`INSERT INTO documents (userId, filePath, fileName) VALUES (?, ?, ?)`, [req.session.user.id, filePath, fileName]);
-        res.status(200).json({ message: "Document uploaded successfully!", docId, creditsLeft: user.credits - 1, fileName });
-    } catch (err) {
-        console.error("Error:", err);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-});
-
-// Get Matched Documents
-app.get('/matches/:docId', async (req, res) => {
-    if (!req.session.user) return res.status(401).json({ message: "Not Authorized! Please Login" });
-
-    try {
-        const { docId } = req.params;
-        const uploadedDoc = await getQuery(`SELECT filePath, fileName FROM documents WHERE id = ?`, [docId]);
-        if (!uploadedDoc) return res.status(404).json({ message: "Document not found!" });
-
-        const { filePath, fileName } = uploadedDoc;
-        const uploadedText = await fs.promises.readFile(filePath, 'utf8');
-
-        const docs = await getAllQuery(`SELECT filePath, fileName FROM documents WHERE filePath != ?`, [filePath]);
-        const matches = [];
-
-        for (const doc of docs) {
-            try {
-                const existingText = await fs.promises.readFile(doc.filePath, 'utf8');
-                const similarity = calculateSimilarity(uploadedText, existingText);
-                if (similarity > 0.3) {
-                    matches.push({ fileName: doc.fileName, similarity: `${(similarity * 100).toFixed(2)}%` });
-                }
-            } catch (err) {
-                console.error("Error reading file:", doc.filePath, err);
-            }
-        }
-
-        res.status(200).json({ matches });
-    } catch (err) {
-        console.error("Error:", err);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-});
-
-// Helper function to calculate similarity
+// Helper function to calculate similarity between two strings
 function calculateSimilarity(text1, text2) {
     if (!text1.length || !text2.length) return 0;
     const maxLength = Math.max(text1.length, text2.length);
     const distance = levenshtein.get(text1, text2);
     return 1 - (distance / maxLength);
 }
+
+// Document upload (deducts 1 credit)
+app.post('/scan', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not Authorized! Please Login" });
+    }
+    const { text, fileName } = req.body;
+    if (!text || !fileName) {
+        return res.status(400).json({ message: "Text content and file name are required!" });
+    }
+
+    try {
+        // Check user credits
+        const user = await getQuery(`SELECT credits FROM users WHERE id = ?`, [req.session.user.id]);
+        if (!user || user.credits < 1) {
+            return res.status(403).json({ message: "Insufficient credits! Please request." });
+        }
+
+        // Deduct 1 credit
+        await runQuery(`UPDATE users SET credits = credits - 1 WHERE id = ?`, [req.session.user.id]);
+
+        // Save the document locally
+        const docId = Date.now();
+        const filePath = path.join(uploadDir, `${docId}_${fileName}`);
+        await fs.promises.writeFile(filePath, text);
+
+        // Save document metadata in the database
+        await runQuery(
+            `INSERT INTO documents (userId, filePath, fileName) VALUES (?, ?, ?)`,
+            [req.session.user.id, filePath, fileName]
+        );
+
+        // Compare the uploaded text with all existing documents
+        const docs = await getAllQuery(`SELECT filePath, fileName FROM documents WHERE filePath != ?`, [filePath]);
+        const matches = [];
+
+        for (const doc of docs) {
+            try {
+                const existingText = await fs.promises.readFile(doc.filePath, 'utf8');
+                const similarity = calculateSimilarity(text, existingText);
+                console.log(`Comparing ${fileName} with ${doc.fileName}: Similarity = ${similarity}`);
+                if (similarity > 0.3) { // Adjust the threshold as needed
+                    matches.push({
+                        fileName: doc.fileName,
+                        similarity: (similarity * 100).toFixed(2) + '%'
+                    });
+                }
+            } catch (err) {
+                console.error("Error reading file:", doc.filePath, err);
+            }
+        }
+
+        console.log("Matches found:", matches);
+        res.status(200).json({
+            message: "Document uploaded successfully!",
+            docId,
+            creditsLeft: user.credits - 1,
+            fileName,
+            matches // Send matches back to the frontend
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
 
 // Request Credits
 app.post('/credits/request', async (req, res) => {
