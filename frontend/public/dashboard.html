@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - CBDSS</title>
+    <title>Dashboard - CBDSS</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
     <header>
@@ -14,19 +14,21 @@
             <h1>Credit-Based Document Scanning System</h1>
         </div>
         <nav>
-            <a href="admin-dashboard.html">Admin Dashboard</a>
+            <a href="dashboard.html">Dashboard</a>
             <a href="about.html">About</a>
             <a href="contact.html">Contact</a>
             <a href="loginSignup.html" class="btn" id="logout">Logout</a>
         </nav>
     </header>
-
-    <main class="adminMain">
-        <section class="analyticsAdmin">
-            <h2 class="adminTitle">Admin Analytics</h2>
-            <div class="analyticsBox" id="totalScans">Total Scans: Loading...</div>
-            <div class="analyticsBox" id="topUsers">Top Users: Loading...</div>
-            <div class="analyticsBox" id="commonTopics">Most Common Topics: Loading...</div>
+    
+    <main class="dashboardMain">
+        <section id="dashboard">
+            <h2 class="dashboardTitle">Upload Document</h2>
+            <form action="" id="uploadForm" class="uploadForm">
+                <textarea name="documentText" id="documentText" placeholder="Paste your document text here..." required></textarea>
+                <button type="submit" class="uploadBtn">Scan Document</button>
+            </form>
+            <p class="creditText">Credits Left: <span id="creditBalance">50</span></p>
         </section>
     </main>
 
@@ -35,7 +37,7 @@
     </footer>
 
     <script>
-        // Add JavaScript for fetching analytics data
+        // Add JavaScript for document upload and credit management
     </script>
 </body>
 </html>

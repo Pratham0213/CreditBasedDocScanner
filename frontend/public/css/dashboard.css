@@ -1,0 +1,83 @@
+.dashboardMain {
+    padding: 40px 20px;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+}
+
+.dashboardTitle {
+    font-size: 32px;
+    color: #34495e;
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+/* Upload Form Styling */
+.uploadForm {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    border-left: 5px solid #f39c12;
+}
+
+.uploadForm textarea {
+    width: 100%;
+    height: 200px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    resize: vertical;
+}
+
+.uploadBtn {
+    width: 100%;
+    padding: 12px;
+    background-color: #f39c12;
+    color: white;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+.uploadBtn:hover {
+    background-color: #e67e22;
+}
+
+/* Credits Text */
+.creditText {
+    text-align: center;
+    font-size: 18px;
+    color: #34495e;
+    margin-top: 20px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .dashboardMain {
+        padding: 20px;
+    }
+
+    .uploadForm {
+        padding: 20px;
+        width: 90%;
+    }
+
+    .uploadForm textarea {
+        height: 150px;
+    }
+
+    .uploadBtn {
+        font-size: 16px;
+    }
+}

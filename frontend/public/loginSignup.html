@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Signup - CBDSS</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/loginSignup.css">
+</head>
+<body>
+    <header>
+        <div>
+            <img class="logo" src="images/logo.jpg" alt="Logo">
+            <h1>Credit-Based Document Scanning System</h1>
+        </div>
+        <nav>
+            <a href="/">Home</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <main class="authMain">
+        <h1 class="authTitle">Login / SignUp</h1>
+        
+        <div class="formContainer">
+            <form action="" id="regForm" class="authForm">
+                <input type="text" name="username" id="username" placeholder="Username"
+                    pattern="^[A-Za-z0-9]{6,}$" title="Username must be of at least 6 characters (letters and numbers allowed)" required>
+                <input type="email" name="email" id="email" placeholder="Email" 
+                    pattern="^\S+@\S+\.\S+$" title="Enter a valid email" required>
+                <input type="password" name="password" id="password" placeholder="Password" 
+                    pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$" title="Password must be of at least 6 characters, including 1 letter and 1 number" required>
+                <button type="submit" class="btn">SignUp</button>
+            </form>
+
+            <form action="" id="loginForm" class="authForm">
+                <input type="email" name="email" id="email" placeholder="Email" 
+                    pattern="^\S+@\S+\.\S+$" title="Enter a valid email" required>
+                <input type="password" name="password" id="password" placeholder="Password" 
+                    pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$" title="Password must be of at least 6 characters, including 1 letter and 1 number" required>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Shivam Document Scanner Website Application. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById("regForm").addEventListener("submit", function(event) {
+            if (!this.checkValidity()) {
+                event.preventDefault();
+            }
+        });
+
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            if (!this.checkValidity()) {
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

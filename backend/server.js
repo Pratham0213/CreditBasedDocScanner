@@ -34,8 +34,9 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 app.get('/', (req, res) => {
-    res.send('Welcome to the Express API!')
-})
+    res.sendFile(path.join(__dirname, '../frontend/public/home.html')); 
+});
+
 
 
 //SignUp....User Registration
