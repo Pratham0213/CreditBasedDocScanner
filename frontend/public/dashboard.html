@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css">
 </head>
+
 <body>
     <header>
         <div>
@@ -20,15 +22,22 @@
             <a href="loginSignup.html" class="btn" id="logout">Logout</a>
         </nav>
     </header>
-    
+
     <main class="dashboardMain">
         <section id="dashboard">
+            <h2>Welcome, <span id="username"></span>!</h2>
             <h2 class="dashboardTitle">Upload Document</h2>
-            <form action="" id="uploadForm" class="uploadForm">
-                <textarea name="documentText" id="documentText" placeholder="Paste your document text here..." required></textarea>
-                <button type="submit" class="uploadBtn">Scan Document</button>
+            <form id="uploadForm" class="uploadForm">
+                <input type="file" id="fileInput" accept=".txt" required>
+                <button type="submit" class="uploadBtn">Upload and Scan</button>
             </form>
             <p class="creditText">Credits Left: <span id="creditBalance">50</span></p>
+            <button id="requestCredits" class="btn">Request More Credits</button>
+        </section>
+
+        <section id="uploadedDocuments">
+            <h2>Uploaded Documents</h2>
+            <ul id="documentList"></ul>
         </section>
     </main>
 
@@ -37,7 +46,133 @@
     </footer>
 
     <script>
-        // Add JavaScript for document upload and credit management
+        // Check session on page load
+        fetch('/user/profile')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.user) {
+                    window.location.href = 'loginSignup.html'; // Redirect to login/Signup page if no session found
+                } else {
+                    document.getElementById('username').textContent = data.user.username;
+                    document.getElementById('creditBalance').textContent = data.user.credits;
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching user profile:", error);
+                window.location.href = 'loginSignup.html'; // Redirect to login page if any error
+            });
+
+        // File upload handling
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+
+            // Validate file type
+            if (file.type !== 'text/plain') {
+                alert('Please upload a plain text file (.txt).');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const text = event.target.result;
+                const fileName = file.name; // Get the file name
+
+                try {
+                    // Step 1: Upload the document
+                    const uploadResponse = await fetch('/scan', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ text, fileName }),
+                    });
+                    const uploadResult = await uploadResponse.json();
+                    if (!uploadResponse.ok) {
+                        throw new Error(uploadResult.message);
+                    }
+
+                    alert('Document uploaded successfully!');
+                    document.getElementById('creditBalance').textContent = uploadResult.creditsLeft;
+
+                    // Step 2: Check for similar documents
+                    const matchesResponse = await fetch(`/matches/${uploadResult.docId}`);
+                    const matchesResult = await matchesResponse.json();
+                    if (matchesResult.matches && matchesResult.matches.length > 0) {
+                        const similarityMessage = matchesResult.matches
+                            .map(match => `Similarity: ${match.similarity} with ${match.fileName}`)
+                            .join('\n');
+                        alert(`Similar documents found:\n${similarityMessage}`);
+                    } else {
+                        alert('No similar documents found.');
+                    }
+
+                    loadUploadedDocs(); // Refresh list
+                } catch (error) {
+                    alert(error.message);
+                }
+            };
+            reader.readAsText(file); // Read files as text
+        });
+
+        // Credits request handling
+        document.getElementById('requestCredits').addEventListener('click', async () => {
+            const amount = prompt('Enter the number of credits you want to request: (Should not be more than 20)');
+            try {
+                if (amount && !isNaN(amount) && amount > 0 && amount <= 20) {
+                    const response = await fetch('/credits/request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ amount: parseInt(amount) }),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        alert(result.message);
+                    }
+                } else {
+                    throw new Error('Invalid amount entered...amount should be between 0 and 20');
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Load uploaded docs
+        async function loadUploadedDocs() {
+            try {
+                const response = await fetch('/user/documents');
+                const documents = await response.json();
+                const documentList = document.getElementById('documentList');
+                if (documents.length === 0) {
+                    documentList.innerHTML = '<li>No documents uploaded yet.</li>';
+                } else {
+                    documentList.innerHTML = documents.map(doc => `
+                        <li>
+                            <a href="${doc.filePath}" target="_blank">${doc.fileName}</a>
+                        </li>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error("Error loading uploaded documents:", error);
+                alert('Error loading uploaded documents. Please try again later.');
+            }
+        }
+
+        // Logout
+        document.getElementById('logout').addEventListener('click', async () => {
+            await fetch('/auth/logout', { method: 'POST' });
+            window.location.href = 'loginSignup.html';
+        });
+
+        // Initial load
+        loadUploadedDocs();
     </script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/admin-dashboard.css">
 </head>
+
 <body>
     <header>
         <div>
@@ -28,6 +30,16 @@
             <div class="analyticsBox" id="topUsers">Top Users: Loading...</div>
             <div class="analyticsBox" id="commonTopics">Most Common Topics: Loading...</div>
         </section>
+
+        <section id="creditRequests">
+            <h2>Credit Requests</h2>
+            <ul id="requestList"></ul>
+        </section>
+
+        <section id="allDocuments">
+            <h2>All Uploaded Documents</h2>
+            <ul id="documentList"></ul>
+        </section>
     </main>
 
     <footer>
@@ -35,7 +47,101 @@
     </footer>
 
     <script>
-        // Add JavaScript for fetching analytics data
+        // Check session on page load
+        fetch('/user/profile')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.user || data.user.role !== 'admin') {
+                    window.location.href = 'loginSignup.html'; // Redirect to login page if no session or not a admin
+                }
+            });
+
+        // Fetch analytics data
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/admin/analytics');
+                const data = await response.json();
+                document.getElementById('totalScans').textContent = `Total Scans: ${data.totalScans}`;
+                document.getElementById('topUsers').textContent = `Top Users: ${data.topUsers.map(user =>
+                    `${user.username} (${user.scanCount})`
+                ).join(', ')}`;
+                document.getElementById('commonTopics').textContent = `Most Common Topics: ${data.mostCommonTopics.map(topic =>
+                    `${topic.word} (${topic.count})`
+                ).join(', ')}`;
+            } catch (error) {
+                console.error("Error loading analytics:", error);
+            }
+        }
+
+        // Load credit requests
+        async function loadCreditRequests() {
+            try {
+                const response = await fetch('/admin/credit-requests');
+                const requests = await response.json();
+                const requestList = document.getElementById('requestList');
+                requestList.innerHTML = requests.map(request => `
+                    <li>
+                        <span>${request.username} requested ${request.amount} credits</span>
+                        <button onclick="approveRequest(${request.id})">Approve</button>
+                        <button onclick="rejectRequest(${request.id})">Reject</button>
+                    </li>
+                `).join('');
+            } catch (error) {
+                console.error("Error loading credit requests:", error);
+            }
+        }
+
+        // Load all documents
+        async function loadAllDocuments() {
+            try {
+                const response = await fetch('/admin/documents');
+                const documents = await response.json();
+                const documentList = document.getElementById('documentList');
+                documentList.innerHTML = documents.map(doc => `
+                    <li>
+                        <a href="${doc.filePath}" target="_blank">${doc.fileName}</a>
+                    </li>
+                `).join('');
+            } catch (error) {
+                console.error("Error loading documents:", error);
+            }
+        }
+
+        // Approve credit request
+        async function approveRequest(requestId) {
+            try {
+                const response = await fetch(`/admin/approve-request/${requestId}`, { method: 'POST' });
+                const result = await response.json();
+                alert(result.message);
+                loadCreditRequests(); // Refresh request list
+            } catch (error) {
+                console.error("Error approving request:", error);
+            }
+        }
+
+        // Reject credit request
+        async function rejectRequest(requestId) {
+            try {
+                const response = await fetch(`/admin/reject-request/${requestId}`, { method: 'POST' });
+                const result = await response.json();
+                alert(result.message);
+                loadCreditRequests(); // Refresh request list
+            } catch (error) {
+                console.error("Error rejecting request:", error);
+            }
+        }
+
+        // Logout
+        document.getElementById('logout').addEventListener('click', async () => {
+            await fetch('/auth/logout', { method: 'POST' });
+            window.location.href = 'loginSignup.html';
+        });
+
+        // Load analytics, credit requests and documents on page load
+        loadAnalytics();
+        loadCreditRequests();
+        loadAllDocuments();
     </script>
 </body>
+
 </html>

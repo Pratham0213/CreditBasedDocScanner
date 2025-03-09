@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/about.css">
 </head>
+
 <body>
     <header>
         <div class="headerContent">
@@ -17,7 +19,7 @@
             <a href="/">Home</a>
             <a href="about.html">About</a>
             <a href="contact.html">Contact</a>
-            <a href="loginSignup.html" class="btn">Login/SignUp</a>
+            <a href="loginSignup.html" id="authButton" class="btn">Login/SignUp</a>
         </nav>
     </header>
 
@@ -25,7 +27,10 @@
         <section id="about" class="aboutSection">
             <h2 class="sectionTitle">About Us</h2>
             <p class="aboutText">
-                Our system is designed to help users scan and compare documents easily. We use the Levenshtein algorithm to detect similarities between documents. Users can upload their documents and compare them to check for similarities. We offer 20 free scans daily, and users can request more credits as needed. Our system is secure and accurate, providing simple and efficient document comparisons in just a few clicks.
+                Our system is designed to help users scan and compare documents easily. We use the Levenshtein algorithm
+                to detect similarities between documents. Users can upload their documents and compare them to check for
+                similarities. We offer 20 free scans daily, and users can request more credits as needed. Our system is
+                secure and accurate, providing simple and efficient document comparisons in just a few clicks.
             </p>
             <p class="aboutText">Created by: Shivam Adarsh</p>
         </section>
@@ -35,5 +40,25 @@
         <p>&copy; 2025 Shivam Document Scanner Website Application. All rights reserved.</p>
     </footer>
 
+    <script>
+        fetch('/user/profile')
+            .then(response => response.json())
+            .then(data => {
+                const authButton = document.getElementById('authButton');
+                if (data.user) {
+                    authButton.textContent = 'Logout';
+                    authButton.href = '#'; // Prevent default link behavior
+                    authButton.addEventListener('click', () => {
+                        fetch('/auth/logout', { method: 'POST' })
+                            .then(() => window.location.href = 'loginSignup.html');
+                    });
+                } else {
+                    authButton.textContent = 'Login/Signup';
+                    authButton.href = 'loginSignup.html';
+                }
+            });
+    </script>
+
 </body>
+
 </html>
