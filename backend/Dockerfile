@@ -1,11 +1,11 @@
 # Use Node.js as the base image
-FROM node:16
+FROM node:18
 
 # Set the working directory
 WORKDIR /app
 
 # Copy package.json and package-lock.json
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm install
