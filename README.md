@@ -169,13 +169,7 @@ Use Postman to test the backend APIs:
 6.	Admin Analytics: GET /admin/analytics
 2. Frontend Testing
 •	Test the frontend by navigating through the pages and verifying dynamic behavior based on user roles.
-VI) Deployment
-1.	Backend:
-o	Deploy the backend using a platform like Heroku or Render.
-o	Set environment variables (SESSION_SECRET, ADMIN_PASSWORD) in the deployment environment.
-2.	Frontend:
-o	Deploy the frontend using a platform like Netlify or Vercel.
-VII) Future Enhancements
+VI) Future Enhancements
 1.	File Type Support:
 o	Allow users to upload PDFs and Word documents.
 2.	Email Notifications:
