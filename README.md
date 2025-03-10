@@ -1,46 +1,110 @@
-# CreditBasedDocScanner
+Credit-Based Document Scanning System (CBDSS) Documentation
+1. Project Overview
+The Credit-Based Document Scanning System (CBDSS) is a web application that allows users to upload and compare text documents for similarity. Users are given a limited number of credits to upload and scan documents. Admins can manage user credit requests and view system analytics.
 
-
-10-Day Take-Home Assignment: Credit-Based Document Scanning System
-
-The Credit-Based Document Scanning System (CBDSS) is a web application that allows users to upload and match text/plain documents for similarity. Users are given a limited number of credits to upload and scan documents. Admins can manage user credit requests and view system analytics.
-
-I) Features:
+2. Features
 User Features
-1.	User Registration and Login:
-o	Users can register with a unique username and email.
-o	Users can log in to access their dashboard.
-2.	Document Upload and Scanning:
-o	Users can upload plain text documents.
-o	Each upload deducts 1 credit from the user's account.
-o	The system compares the uploaded document with existing documents and displays matches with a similarity score.
-3.	Credit Management:
-o	Users start with 20 credits.
-o	Users can request additional credits, which require admin approval.
-4.	Logout:
-o	Users can log out, which clears their session.
-Admin Features
-1.	Admin Login:
-o	A single admin account is created automatically when the application starts.
-o	Admins can log in to access the admin dashboard.
-2.	Admin Dashboard:
-o	Admins can view all uploaded documents.
-o	Admins can approve or reject user credit requests.
-3.	System Analytics:
-o	Admins can view total scans, top users, and most common topics in uploaded documents.
+User Registration and Login:
 
-II) Backend Implementation: 
+Users can register with a unique username and email.
+
+Users can log in to access their dashboard.
+
+Document Upload and Scanning:
+
+Users can upload plain text documents.
+
+Each upload deducts 1 credit from the user's account.
+
+The system compares the uploaded document with existing documents and displays matches with a similarity score.
+
+Credit Management:
+
+Users start with 20 credits.
+
+Users can request additional credits, which require admin approval.
+
+User Profile:
+
+Users can view their profile, including their username, email, role, and remaining credits.
+
+Logout:
+
+Users can log out, which clears their session.
+
+Admin Features
+Admin Login:
+
+A single admin account is created automatically when the application starts.
+
+Admins can log in to access the admin dashboard.
+
+Admin Dashboard:
+
+Admins can view all uploaded documents.
+
+Admins can approve or reject user credit requests.
+
+System Analytics:
+
+Admins can view total scans, top users, and most common topics in uploaded documents.
+
+3. Frontend Implementation
+1. Pages
+Login/Signup Page:
+
+Users can register or log in.
+
+Dashboard:
+
+Users can upload documents, view their uploaded documents, and request credits.
+
+Admin Dashboard:
+
+Admins can view all uploaded documents, approve/reject credit requests, and view system analytics.
+
+About Page:
+
+Provides information about the project.
+
+Contact Page:
+
+Displays contact information.
+
+2. Dynamic Navigation
+If the user is logged in:
+
+Regular users see Dashboard.
+
+Admins see Admin Dashboard.
+
+If the user is not logged in, they see Home.
+
+4. Backend Implementation
 1. Setup
-1.	Initialize Project:
-o	Create a project folder:
+Initialize Project:
+
+Create a project folder:
+
+bash
+Copy
 mkdir creditBasedDocScanner
 cd creditBasedDocScanner
-o	Initialize a Node.js project:
+Initialize a Node.js project:
+
+bash
+Copy
 npm init -y
-2.	Install Dependencies:
-o	Install required packages:
+Install Dependencies:
+
+Install required packages:
+
+bash
+Copy
 npm install express bcrypt sqlite3 express-session uuid dotenv fast-levenshtein
-3.	Folder Structure:
+Folder Structure:
+
+Copy
 creditBasedDocScanner/
 ├── backend/
 │   ├── database/
@@ -57,6 +121,8 @@ creditBasedDocScanner/
 │   │   └── contact.css
 │   ├── images/
 │   │   └── logo.jpg
+│   ├── js/
+│   │   └── scripts.js
 │   ├── about.html
 │   ├── contact.html
 │   ├── dashboard.html
@@ -65,53 +131,90 @@ creditBasedDocScanner/
 ├── package.json
 ├── .env
 └── README.md
-4.	Environment Variables:
-o	Create a .env file:
+Environment Variables:
+
+Create a .env file:
+
+env
+Copy
 SESSION_SECRET=supersecretkey
 ADMIN_PASSWORD=admin123
- 
 2. Backend API Endpoints
-1.	User Registration:
-o	Endpoint: POST /auth/register
-o	Body:
+User Registration:
+
+Endpoint: POST /auth/register
+
+Body:
+
+json
+Copy
 {
   "username": "user1",
   "email": "user1@example.com",
   "password": "password123"
 }
-2.	User Login:
-o	Endpoint: POST /auth/login
-o	Body:
+User Login:
+
+Endpoint: POST /auth/login
+
+Body:
+
+json
+Copy
 {
   "email": "user1@example.com",
   "password": "password123"
 }
-3.	User Logout:
-o	Endpoint: POST /auth/logout
-4.	User Profile:
-o	Endpoint: GET /user/profile
-5.	Document Upload:
-o	Endpoint: POST /scan
-o	Body:
+User Logout:
+
+Endpoint: POST /auth/logout
+
+User Profile:
+
+Endpoint: GET /user/profile
+
+Document Upload:
+
+Endpoint: POST /scan
+
+Body:
+
+json
+Copy
 {
   "text": "This is a sample document text.",
   "fileName": "sample.txt"
 }
-6.	Credit Request:
-o	Endpoint: POST /credits/request
-o	Body:
+Get Matching Documents:
+
+Endpoint: GET /matches/:docId
+
+Example: GET /matches/1741409931040
+
+Credit Request:
+
+Endpoint: POST /credits/request
+
+Body:
+
+json
+Copy
 {
   "amount": 20
 }
-7.	Admin Analytics:
-o	Endpoint: GET /admin/analytics
-8.	Admin Dashboard:
-o	Endpoint: GET /admin/dashboard
-9.	Matching Document
-o	Endpoint: POST /scan
+Admin Analytics:
 
-III) Database Schema
-1.	Users Table:
+Endpoint: GET /admin/analytics
+
+Admin Dashboard:
+
+Endpoint: GET /admin/dashboard
+
+3. Database Schema
+Users Table:
+
+sql
+Copy
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
@@ -120,7 +223,10 @@ CREATE TABLE users (
     role TEXT DEFAULT 'user',
     credits INTEGER DEFAULT 20
 );
-2.	Documents Table:
+Documents Table:
+
+sql
+Copy
 CREATE TABLE documents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     userId INTEGER NOT NULL,
@@ -129,7 +235,10 @@ CREATE TABLE documents (
     uploadedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES users(id)
 );
-3.	Credit Requests Table:
+Credit Requests Table:
+
+sql
+Copy
 CREATE TABLE credit_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     userId INTEGER NOT NULL,
@@ -138,52 +247,70 @@ CREATE TABLE credit_requests (
     requestedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES users(id)
 );
+5. How to Run the Project
+1. Backend
+Install Dependencies:
 
-IV) Frontend Implementation
-1. Pages
-1.	Login/Signup Page:
-o	Users can register or log in.
-2.	Dashboard:
-o	Users can upload documents, view their uploaded documents, and request credits.
-3.	Admin Dashboard:
-o	Admins can view all uploaded documents, approve/reject credit requests, and view system analytics.
-4.	About Page:
-o	Provides information about the project.
-5.	Contact Page:
-o	Displays contact information.
+bash
+Copy
+npm install
+Start the Server:
 
-2. Dynamic Navigation
-•	If the user is logged in:
-o	Regular users see Dashboard.
-o	Admins see Admin Dashboard.
-•	If the user is not logged in, they see Home.
+bash
+Copy
+nodemon backend/server.js
+Test APIs:
 
-V) Testing
-1. Backend Testing
-Use Postman to test the backend APIs:
-1.	User Registration: POST /auth/register
-2.	User Login: POST /auth/login
-3.	Document Upload: POST /scan
-4.	Get Matches: POST /scan
-5.	Credit Request: POST /credits/request
-6.	Admin Analytics: GET /admin/analytics
-2. Frontend Testing
-•	Test the frontend by navigating through the pages and verifying dynamic behavior based on user roles.
-VI) Future Enhancements
-1.	File Type Support:
-o	Allow users to upload PDFs and Word documents.
-2.	Email Notifications:
-o	Notify users when their credit requests are approved or rejected.
-3.	Advanced Analytics:
-o	Add more detailed analytics for admins.
+Use Postman to test the backend APIs.
 
+2. Frontend
+Open the Frontend:
 
+Open the frontend/ folder in a browser or use a local server (e.g., live-server).
 
+Test the Application:
 
+Register, log in, upload documents, and test other features.
 
+6. Deployment
+1. Backend (Using Render)
+Push your backend code to GitHub.
 
+Deploy to Render:
 
+Create a new web service on Render and connect your GitHub repository.
 
+Add environment variables (SESSION_SECRET, ADMIN_PASSWORD).
 
+Deploy the backend.
 
+2. Frontend (Using Netlify)
+Push your frontend code to GitHub.
+
+Deploy to Netlify:
+
+Create a new site on Netlify and connect your GitHub repository.
+
+Deploy the frontend.
+
+7. Future Enhancements
+File Type Support:
+
+Allow users to upload PDFs and Word documents.
+
+Email Notifications:
+
+Notify users when their credit requests are approved or rejected.
+
+Advanced Analytics:
+
+Add more detailed analytics for admins.
+
+User Roles:
+
+Add more roles (e.g., moderator) with specific permissions.
+
+Mobile App:
+
+Develop a mobile app for easier access.
 
