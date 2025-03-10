@@ -1,6 +1,6 @@
 require('dotenv').config();
 const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const db = new sqlite3.Database(process.env.DB_PATH || "./backend/database/users.db", (err) => {
     if (err) {
