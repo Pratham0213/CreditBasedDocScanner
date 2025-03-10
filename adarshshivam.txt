@@ -1,0 +1,5 @@
+Admin Registration username, email, password: 
+
+Username: admin
+Email: admin@example.com
+Password: adarsh123
