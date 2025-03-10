@@ -19,6 +19,7 @@ app.use(session({
     cookie: { secure: false, httpOnly: true }
 }));
 app.use(express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // File upload directory (Only plain text files)
 const uploadDir = path.join(__dirname, 'uploads');
@@ -66,7 +67,7 @@ function saveDocument(filePath, text) {
 
 // Routes
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/public/home.html'));
+    res.sendFile(path.join(__dirname, '../frontend' ,'../frontend/public/home.html'));
 });
 
 // User Registration
